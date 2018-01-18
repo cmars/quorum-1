@@ -1,0 +1,42 @@
+name: quorum
+version: 'master'
+summary: A permissioned implementation of Ethereum supporting data privacy
+description: |
+  Quorum is an Ethereum-based distributed ledger protocol with transaction/contract privacy and new consensus mechanisms.
+
+grade: stable
+confinement: strict
+
+apps:
+  geth:
+    command: bin/geth --datadir "$SNAP_USER_COMMON/ethereum"
+    plugs:
+      - network
+      - network-bind
+      # hardware-observe is necessary when installing on actual hardware, or
+      # geth will hang on init trying to enumerate usb devices. Even if --nousb
+      # is specified. See https://github.com/ethereum/go-ethereum/issues/15101.
+      - hardware-observe
+  swarm:
+    command: bin/swarm
+    plugs:
+      - network
+      - network-bind
+
+parts:
+  go:
+    source-tag: go1.9.2
+  quorum:
+    after: [go]
+    source: https://github.com/jpmorganchase/quorum.git
+    source-branch: master
+    plugin: nil
+    build: |
+        make geth swarm
+    install: |
+        mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+        mv build/bin/geth $SNAPCRAFT_PART_INSTALL/bin
+        mv build/bin/swarm $SNAPCRAFT_PART_INSTALL/bin
+    stage:
+      - bin/geth
+      - bin/swarm
