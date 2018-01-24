@@ -22,6 +22,13 @@ apps:
     plugs:
       - network
       - network-bind
+      - hardware-observe  # see above note on geth, same applies here
+  bootnode:
+    command: bin/bootnode
+    plugs:
+      - network
+      - network-bind
+      - hardware-observe  # see above note on geth, same applies here
 
 parts:
   go:
@@ -33,10 +40,13 @@ parts:
     plugin: nil
     build: |
         make geth swarm
+        build/env.sh go run build/ci.go install ./cmd/bootnode
     install: |
         mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-        mv build/bin/geth $SNAPCRAFT_PART_INSTALL/bin
-        mv build/bin/swarm $SNAPCRAFT_PART_INSTALL/bin
+        for f in geth swarm bootnode; do
+            mv build/bin/${f} $SNAPCRAFT_PART_INSTALL/bin
+        done
     stage:
       - bin/geth
       - bin/swarm
+      - bin/bootnode
