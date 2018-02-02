@@ -54,6 +54,12 @@ apps:
       - network
       - network-bind
       - hardware-observe
+  enode:
+    command: bin/enode.py
+    plugs:
+      - network
+      - network-bind
+      - hardware-observe
 
 parts:
   go:
@@ -111,7 +117,7 @@ parts:
       - python3-jinja2
     install: |
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      for s in constellation-config.py constellation-wrapper geth-wrapper quorum-init.py attach.bash; do
+      for s in constellation-config.py constellation-wrapper geth-wrapper quorum-init.py attach.bash enode.py; do
         cp ../../../snap/${s} $SNAPCRAFT_PART_INSTALL/bin
       done
     stage:
