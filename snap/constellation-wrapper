@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+if [ ! -f "${SNAP_USER_COMMON}/constellation/node.conf" ]; then
+	${SNAP}/bin/constellation-config.py othernodes=
+fi
+
+if [ ! -f "${SNAP_USER_COMMON}/constellation/node.pub" ]; then
+	${SNAP}/bin/constellation-node --workdir=${SNAP_USER_COMMON}/constellation --generatekeys=node </dev/null
+fi
+
+exec ${SNAP}/bin/constellation-node --workdir=${SNAP_USER_COMMON}/constellation ${SNAP_USER_COMMON}/constellation/node.conf "$@"

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+export PRIVATE_CONFIG=${SNAP_USER_COMMON}/constellation/node.conf
+GLOBAL_ARGS="--nodiscover --syncmode full --mine --rpc --rpcaddr 0.0.0.0 --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul"
+
+exec ${SNAP}/bin/geth --datadir ${SNAP_USER_COMMON}/ethereum ${GLOBAL_ARGS} "$@"

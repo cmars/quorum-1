@@ -9,7 +9,7 @@ confinement: strict
 
 apps:
   geth:
-    command: bin/geth --datadir "$SNAP_USER_COMMON/ethereum"
+    command: bin/geth-wrapper
     plugs:
       - network
       - network-bind
@@ -29,6 +29,31 @@ apps:
       - network
       - network-bind
       - hardware-observe  # see above note on geth, same applies here
+  puppeth:
+    command: bin/puppeth
+    plugs:
+      - network
+      - network-bind
+      - hardware-observe  # see above note on geth, same applies here
+  constellation-node:
+    command: bin/constellation-wrapper
+    plugs:
+      - network
+      - network-bind
+  constellation-config:
+    command: bin/constellation-config.py
+  init:
+    command: bin/quorum-init.py
+    plugs:
+      - network
+      - network-bind
+      - hardware-observe
+  attach:
+    command: bin/attach.bash
+    plugs:
+      - network
+      - network-bind
+      - hardware-observe
 
 parts:
   go:
@@ -40,13 +65,55 @@ parts:
     plugin: nil
     build: |
         make geth swarm
-        build/env.sh go run build/ci.go install ./cmd/bootnode
+        for c in bootnode puppeth; do
+            build/env.sh go run build/ci.go install ./cmd/${c}
+        done
     install: |
         mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-        for f in geth swarm bootnode; do
+        for f in geth swarm bootnode puppeth; do
             mv build/bin/${f} $SNAPCRAFT_PART_INSTALL/bin
         done
     stage:
-      - bin/geth
-      - bin/swarm
-      - bin/bootnode
+      - bin
+  constellation:
+    source: https://github.com/jpmorganchase/constellation.git
+    source-tag: master
+    plugin: nil
+    build-packages:
+      - libdb-dev
+      - libleveldb-dev
+      - libsodium-dev
+      - zlib1g-dev
+      - libtinfo-dev
+    stage-packages:
+      - libleveldb1v5
+      - libsodium18
+      - zlib1g
+      - libtinfo5
+    prepare: |
+      if [ ! `command -v stack` ]; then
+          curl -sSL https://get.haskellstack.org/ | sh -s - -f
+          stack setup
+      fi
+    build: |
+      stack install
+    install: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cp .stack-work/install/x86_64-linux/lts-*/*/bin/constellation-node $SNAPCRAFT_PART_INSTALL/bin
+    stage:
+      - bin/constellation-node
+      - lib
+      - usr/lib
+  wrappers-and-scripts:
+    source: .
+    plugin: nil
+    stage-packages:
+      - python3-jinja2
+    install: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      for s in constellation-config.py constellation-wrapper geth-wrapper quorum-init.py attach.bash; do
+        cp ../../../snap/${s} $SNAPCRAFT_PART_INSTALL/bin
+      done
+    stage:
+      - bin
+      - usr/lib
