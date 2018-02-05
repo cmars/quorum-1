@@ -54,12 +54,11 @@ apps:
       - network
       - network-bind
       - hardware-observe
-  enode:
-    command: bin/enode.py
+  istanbul:
+    command: bin/istanbul
     plugs:
       - network
       - network-bind
-      - hardware-observe
 
 parts:
   go:
@@ -81,6 +80,12 @@ parts:
         done
     stage:
       - bin
+  istanbul:
+    source: https://github.com/getamis/istanbul-tools.git
+    source-branch: master
+    plugin: go
+    go-packages:
+      - github.com/getamis/istanbul-tools/cmd/istanbul
   constellation:
     source: https://github.com/jpmorganchase/constellation.git
     source-tag: master
@@ -117,7 +122,7 @@ parts:
       - python3-jinja2
     install: |
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      for s in constellation-config.py constellation-wrapper geth-wrapper quorum-init.py attach.bash enode.py; do
+      for s in constellation-config.py constellation-wrapper geth-wrapper quorum-init.py attach.bash; do
         cp ../../../snap/${s} $SNAPCRAFT_PART_INSTALL/bin
       done
     stage:
